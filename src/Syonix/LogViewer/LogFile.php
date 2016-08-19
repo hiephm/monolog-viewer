@@ -54,11 +54,19 @@ class LogFile {
             $hasCustomPattern = false;
         }
         $this->loggers = new ArrayCollection();
+        $krumo = new \Krumo();
+        $krumo->setConfig(array(
+            'display' => array('show_version' => false, 'show_call_info' => false),
+            'sorting' => array('sort_arrays' => false)
+        ));
         foreach ($lines as $line) {
             $entry = ($hasCustomPattern ? $parser->parse($line, 0, 'custom') : $parser->parse($line, 0));
             if (count($entry) > 0) {
                 if(!$this->loggers->contains($entry['logger'])) {
                     $this->loggers->add($entry['logger']);
+                }
+                if (!empty($entry['extra'])) {
+                    $entry['message'] .= $krumo->dump($entry['extra'], KRUMO_RETURN);
                 }
                 $this->lines[] = $entry;
             }

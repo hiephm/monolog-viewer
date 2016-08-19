@@ -57,7 +57,7 @@
             <td class="level"><i class="fa fa-{{ logLevelStyle[level].icon }} fa-fw"></i></td>
             <td class="date">{{ line.date|date(app.config.dateFormat) }}</td>
             <td class="message clearfix{% if line.context|length > 0 %} has-more" onclick="toggleMore({{ id + 1 }});{% endif %}">
-                {{ line.message }}
+                {{ line.message | raw }}
                 {% if line.context|length > 0 %}
                     <div class="context" id="context-{{ id + 1 }}">
                         <table>
