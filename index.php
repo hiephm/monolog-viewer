@@ -12,12 +12,15 @@ define('WEB_URL', BASE_URL . '/web');
 
 $app = new Silex\Application();
 $app['template_url'] = WEB_URL;
-
+$secured = true;
 if(is_readable(CONFIG_FILE)) {
     $app->register(new DerAlex\Silex\YamlConfigServiceProvider(CONFIG_FILE));
     $app['debug'] = ($app['config']['debug']);
     Symfony\Component\Debug\ExceptionHandler::register(!$app['debug']);
     if(in_array($app['config']['timezone'], DateTimeZone::listIdentifiers())) date_default_timezone_set($app['config']['timezone']);
+    if (isset($app['config']['secured'])) {
+        $secured = $app['config']['secured'];
+    }
 }
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
         'twig.path' => __DIR__.'/views',
@@ -25,23 +28,25 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
     ));
 $app->register(new Silex\Provider\SessionServiceProvider());
 $app->register(new Silex\Provider\UrlGeneratorServiceProvider());
-$app->register(new Silex\Provider\SecurityServiceProvider(), array(
-        'security.firewalls' => array(
-            'admin' => array(
-                'pattern' => '^/logs',
-                'form' => array('login_path' => '/login', 'check_path' => '/logs/login_check'),
-                'users' => array(
-                    'user' => array('ROLE_USER', (is_file(PASSWD_FILE) ? file_get_contents(PASSWD_FILE) : null)),
+if ($secured) {
+    $app->register(new Silex\Provider\SecurityServiceProvider(), array(
+            'security.firewalls' => array(
+                'admin' => array(
+                    'pattern' => '^/logs',
+                    'form' => array('login_path' => '/login', 'check_path' => '/logs/login_check'),
+                    'users' => array(
+                        'user' => array('ROLE_USER', (is_file(PASSWD_FILE) ? file_get_contents(PASSWD_FILE) : null)),
+                    ),
+                    'logout' => array('logout_path' => '/logs/logout'),
                 ),
-                'logout' => array('logout_path' => '/logs/logout'),
             ),
-        ),
-    ));
+        ));
+}
 $app['security.encoder.digest'] = $app->share(function ($app) {
         return new \Symfony\Component\Security\Core\Encoder\BCryptPasswordEncoder(10);
     });
 
-if(!is_file(PASSWD_FILE)) {
+if($secured && !is_file(PASSWD_FILE)) {
     $app->match('/', function(\Symfony\Component\HttpFoundation\Request $request) use($app) {
             $error = "";
             if($request->getMethod() == "POST") {

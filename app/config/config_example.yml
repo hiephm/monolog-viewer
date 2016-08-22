@@ -1,4 +1,5 @@
 debug: false
+secured: true
 timezone: "Europe/Zurich"
 dateFormat: d.m.Y, H:i:s
 logs:
