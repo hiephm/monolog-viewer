@@ -13,11 +13,13 @@ define('WEB_URL', BASE_URL . '/web');
 $app = new Silex\Application();
 $app['template_url'] = WEB_URL;
 $secured = true;
+$displayTimezone = date_default_timezone_get();
 if(is_readable(CONFIG_FILE)) {
     $app->register(new DerAlex\Silex\YamlConfigServiceProvider(CONFIG_FILE));
     $app['debug'] = ($app['config']['debug']);
     Symfony\Component\Debug\ExceptionHandler::register(!$app['debug']);
-    if(in_array($app['config']['timezone'], DateTimeZone::listIdentifiers())) date_default_timezone_set($app['config']['timezone']);
+    if(in_array($app['config']['log_timezone'], DateTimeZone::listIdentifiers())) date_default_timezone_set($app['config']['log_timezone']);
+    if(in_array($app['config']['display_timezone'], DateTimeZone::listIdentifiers())) $displayTimezone = $app['config']['display_timezone'];
     if (isset($app['config']['secured'])) {
         $secured = $app['config']['secured'];
     }
@@ -26,6 +28,7 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
         'twig.path' => __DIR__.'/views',
         'twig.options' => array('debug' => $app['debug'])
     ));
+
 $app->register(new Silex\Provider\SessionServiceProvider());
 $app->register(new Silex\Provider\UrlGeneratorServiceProvider());
 if ($secured) {
@@ -45,6 +48,8 @@ if ($secured) {
 $app['security.encoder.digest'] = $app->share(function ($app) {
         return new \Symfony\Component\Security\Core\Encoder\BCryptPasswordEncoder(10);
     });
+
+$app['twig']->getExtension('core')->setTimezone($displayTimezone);
 
 if($secured && !is_file(PASSWD_FILE)) {
     $app->match('/', function(\Symfony\Component\HttpFoundation\Request $request) use($app) {

@@ -1,6 +1,7 @@
 debug: false
 secured: true
-timezone: "Europe/Zurich"
+log_timezone: "UTC"
+display_timezone: "Asia/Ho_Chi_Minh"
 dateFormat: d.m.Y, H:i:s
 logs:
     Demo:
